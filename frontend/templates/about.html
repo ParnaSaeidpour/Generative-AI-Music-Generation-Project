@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}About - WindChime{% endblock %}
+
+{% block content %}
+<div class="about-section">
+    <h1>About Weather Music Generator</h1>
+    
+    <section class="about-content">
+        <h2>Our Vision</h2>
+        <p>We aim to create a web application which will create unique MIDI compositions through an evolutionary algorithm. The compositions will be based on current weather data, leading to dynamic pieces with distinct differences depending on when the application is used. We thought this could serve as an elegant way of combining technological and natural forces, giving users a greater appreciation for the current weather.</p>
+    </section>
+
+    <section class="about-content">
+        <h2>Implementation</h2>
+        <ul>
+            <li><strong>Primary programming language:</strong> Python</li>
+            <li><strong>Weather data:</strong> Utilizing SMHI's APIs to collect current weather parameters (such as temperature, wind speed, precipitation and sunshine).</li>
+            <li><strong>Location selection:</strong> The user selects from a set of locations (primarily cities, potentially also other locations) which tells the application what stations to gather the data from.</li>
+            <li><strong>Evolutionary algorithm:</strong> We will code the algorithm ourselves. The weather data is used to decide the structure of the initial population of the EA, where each weather parameter influences different parts of the composition. The EA then proceeds to generate variations of the baseline or entirely new compositions over a number of generations.</li>
+            <li><strong>Evaluation:</strong> Due to the subjective nature of how good a piece of music is, we are a bit uncertain about the choice of fitness function. Our current idea is to combine human evaluation (perhaps ranking a few provided pieces) with objective measurements such as repetitiveness of notes.</li>
+            <li><strong>Output:</strong> A MIDI-file, containing the generated composition, for the user to save and play at their leisure.</li>
+        </ul>
+    </section>
+
+    <section class="about-content">
+        <h2>Expected Results</h2>
+        <p>We expect that our application will be able to produce dynamically varied compositions, due to basing the creation on something as shifting as the weather and transforming it using something as stochastic as an evolutionary algorithm.</p>
+    </section>
+
+    <section class="about-content">
+        <h2>The Team</h2>
+        <p>This project is developed by Group 19:</p>
+        <ul>
+            <li>Aron Kesete</li>
+            <li>Isac Gustafsson</li>
+            <li>Parna Saeidpour</li>
+            <li>Sami Noroozi</li>
+        </ul>
+    </section>
+</div>
+{% endblock %} 

@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Home - WindChime{% endblock %}
+
+{% block content %}
+<div class="content-container">
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1>Weather-Inspired Music Generator</h1>
+            <p>Create AI-generated music based on real-time weather conditions.</p>
+
+            <div class="hero-features">
+                <div class="feature">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 18a5 5 0 0 0-10 0"></path>
+                        <line x1="12" y1="2" x2="12" y2="9"></line>
+                        <line x1="4.22" y1="10.22" x2="5.64" y2="11.64"></line>
+                        <line x1="1" y1="18" x2="3" y2="18"></line>
+                        <line x1="21" y1="18" x2="23" y2="18"></line>
+                        <line x1="18.36" y1="11.64" x2="19.78" y2="10.22"></line>
+                    </svg>
+                    <span>Real-time Weather Data</span>
+                </div>
+                <div class="feature">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 18V5l12-2v13"></path>
+                        <circle cx="6" cy="18" r="3"></circle>
+                        <circle cx="18" cy="16" r="3"></circle>
+                    </svg>
+                    <span>AI-Generated Melodies</span>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="generator-card card">
+            <div class="card-header">
+                <h2>Generate Your Music</h2>
+                <p>Select a city to create a unique musical piece based on its current weather</p>
+            </div>
+            <form id="musicForm" class="generator-form">
+                <div class="form-group">
+                    <label for="city">Select a City:</label>
+                    <div class="select-wrapper">
+                        <select id="city" name="city" required>
+                            <option value="">Choose a city...</option>
+                            {% for city in cities %}
+                            <option value="{{ city }}">{{ city }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    <span class="btn-text">Generate Music</span>
+                    <div class="spinner hidden"></div>
+                </button>
+            </form>
+        </div>
+
+        <div id="result" class="result-card card hidden">
+            <div class="card-content">
+                <div class="result-header">
+                    <h2>Your Generated Music</h2>
+                    <div class="weather-badge">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 18a5 5 0 0 0-10 0"></path>
+                            <line x1="12" y1="9" x2="12" y2="2"></line>
+                            <line x1="4.22" y1="10.22" x2="5.64" y2="11.64"></line>
+                            <line x1="1" y1="18" x2="3" y2="18"></line>
+                            <line x1="21" y1="18" x2="23" y2="18"></line>
+                            <line x1="18.36" y1="11.64" x2="19.78" y2="10.22"></line>
+                        </svg>
+                        <span id="weatherInfo">Weather information will appear here</span>
+                    </div>
+                </div>
+                
+                <div id="musicPlayer" class="music-player">
+                    <div class="visualization-container">
+                        <div class="visualization-bars">
+                            {% for i in range(32) %}
+                            <div class="bar" style="height: 20%"></div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="player-container">
+                        <div class="audio-player">
+                            <audio id="audioPlayer" controls preload="auto">
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+
+                        <div class="debug-panel">
+                            <div class="debug-item">
+                                <span class="debug-label">Status:</span>
+                                <span id="audioStatus" class="debug-value">No audio loaded</span>
+                            </div>
+                            <div class="debug-item">
+                                <span class="debug-label">Source:</span>
+                                <span id="audioSource" class="debug-value">None</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="download-section">
+                        <h3>Download Options</h3>
+                        <div class="download-buttons">
+                            <a id="midiDownload" class="btn btn-secondary" download>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                                Download MIDI
+                            </a>
+                            <a id="wavDownload" class="btn btn-secondary" download>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                                Download WAV
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('musicForm');
+    const generateBtn = form.querySelector('.btn-primary');
+    const btnText = generateBtn.querySelector('.btn-text');
+    const spinner = generateBtn.querySelector('.spinner');
+    const result = document.getElementById('result');
+    const weatherInfo = document.getElementById('weatherInfo');
+    const musicPlayer = document.getElementById('musicPlayer');
+    const audioPlayer = document.getElementById('audioPlayer');
+    const midiDownload = document.getElementById('midiDownload');
+    const wavDownload = document.getElementById('wavDownload');
+    const audioStatus = document.getElementById('audioStatus');
+    const audioSource = document.getElementById('audioSource');
+    const bars = document.querySelectorAll('.visualization-bars .bar');
+
+    function updateVisualization() {
+        if (audioPlayer.paused) {
+            bars.forEach(bar => bar.style.height = '20%');
+            return;
+        }
+        
+        requestAnimationFrame(updateVisualization);
+        bars.forEach(bar => {
+            const height = Math.random() * 80 + 20;
+            bar.style.height = `${height}%`;
+        });
+    }
+
+    audioPlayer.addEventListener('play', updateVisualization);
+    audioPlayer.addEventListener('pause', () => {
+        bars.forEach(bar => bar.style.height = '20%');
+    });
+
+    // Add audio event listeners
+    audioPlayer.addEventListener('loadstart', () => {
+        audioStatus.textContent = 'Loading audio...';
+        audioStatus.className = 'debug-value loading';
+    });
+
+    audioPlayer.addEventListener('canplay', () => {
+        audioStatus.textContent = 'Audio ready to play';
+        audioStatus.className = 'debug-value ready';
+    });
+
+    audioPlayer.addEventListener('error', (e) => {
+        audioStatus.textContent = `Error: ${e.target.error.message || 'Could not load audio'}`;
+        audioStatus.className = 'debug-value error';
+    });
+
+    audioPlayer.addEventListener('playing', () => {
+        audioStatus.textContent = 'Playing audio';
+        audioStatus.className = 'debug-value playing';
+    });
+
+    audioPlayer.addEventListener('pause', () => {
+        audioStatus.textContent = 'Audio paused';
+        audioStatus.className = 'debug-value paused';
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Show loading state
+        btnText.textContent = 'Generating...';
+        spinner.classList.remove('hidden');
+        generateBtn.disabled = true;
+        result.classList.add('hidden');
+        
+        try {
+            const response = await fetch('/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `city=${encodeURIComponent(form.city.value)}`
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                weatherInfo.textContent = data.message;
+                
+                // Update audio player and download links
+                audioSource.textContent = data.wav_url;
+                audioPlayer.src = data.wav_url;
+                midiDownload.href = data.midi_url;
+                wavDownload.href = data.wav_url;
+                
+                // Show the result section
+                result.classList.remove('hidden');
+                
+                // Load and play the audio
+                audioPlayer.load();
+                audioPlayer.play().catch(error => {
+                    console.error('Playback error:', error);
+                    audioStatus.textContent = `Playback error: ${error.message}`;
+                    audioStatus.className = 'debug-value error';
+                });
+            } else {
+                weatherInfo.textContent = data.message;
+                result.classList.remove('hidden');
+                musicPlayer.classList.add('hidden');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            weatherInfo.textContent = 'An error occurred while generating music.';
+            result.classList.remove('hidden');
+            musicPlayer.classList.add('hidden');
+        } finally {
+            // Reset button state
+            btnText.textContent = 'Generate Music';
+            spinner.classList.add('hidden');
+            generateBtn.disabled = false;
+        }
+    });
+});
+</script>
+{% endblock %} 
