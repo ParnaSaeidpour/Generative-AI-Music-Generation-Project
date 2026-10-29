@@ -1,6 +1,15 @@
+import logging
+import os
 import random
-from mido import MidiFile, MidiTrack, Message
-from midi2audio import FluidSynth  # Import FluidSynth for MIDI to audio conversion
+from mido import MidiFile, MidiTrack, Message, MetaMessage, bpm2tempo
+
+logger = logging.getLogger(__name__)
+
+# MIDI notes must be between 0 and 127; melodies start at middle C (60)
+BASE_NOTE = 60
+MAX_NOTE = 127
+MIN_TEMPO = 60
+MAX_TEMPO = 200
 
 def fitness(melody_data, weather_data):
     #60 (Middle C) is our base
@@ -45,11 +54,11 @@ def crossover(parent1, parent2):
 def mutate(melody_data, note_range):
     melody, tempo = melody_data 
     idx = random.randint(0, len(melody) - 1)
-    melody[idx] = random.randint(60, 60 + note_range)
+    melody[idx] = random.randint(BASE_NOTE, BASE_NOTE + note_range)
 
     if random.random() < 0.5:
         tempo += random.randint(-5, 5)
-        tempo = max(60, min(180, tempo))
+        tempo = max(MIN_TEMPO, min(MAX_TEMPO, tempo))
     
     return melody,tempo
 
@@ -77,7 +86,8 @@ def generate_rhythm_based_on_weather(weather_data):
     wind_speed = weather_data["wind_speed"]
     temperature = weather_data["temperature"]
     humidity = weather_data["humidity"]
-    rain= weather_data["rain"]
+    # Precipitation amount in mm/h (0 when it is not raining)
+    rain = weather_data.get("precipitation_mm", 0)
     base_rhythm = []
     
     if wind_speed > 5:
@@ -101,16 +111,26 @@ def generate_rhythm_based_on_weather(weather_data):
     return rhythm_pattern
 
 
-def generate_music_genetic(weather_data, file_name, generations=30, population_size=20):
+def melody_settings(weather_data):
+    """Note range, melody length and start tempo derived from the weather."""
     note_range = 10 + int(weather_data["wind_speed"]*4+int(weather_data["humidity"])/8)
     note_range += int((100 - weather_data["cloudiness"]) / 10)
+    # Keep every note inside the MIDI range (strong wind made notes above 127)
+    note_range = min(note_range, MAX_NOTE - BASE_NOTE)
     melody_length = int(weather_data["wind_speed"])+20
     tempo = max(60, min(180, 100 + int(weather_data["wind_speed"]*8) + int(weather_data["humidity"]/3)))
     tempo += max(8, 12 + int(weather_data["temperature"] * 5))
-    
+    tempo = max(MIN_TEMPO, min(MAX_TEMPO, tempo))
+    return note_range, melody_length, tempo
+
+
+def evolve_melody(weather_data, generations=30, population_size=20):
+    """Run the genetic algorithm and return the best (melody, tempo)."""
+    note_range, melody_length, tempo = melody_settings(weather_data)
+
 
     population = [
-        ([random.randint(60, 60 + note_range) for _ in range(melody_length)],tempo)
+        ([random.randint(BASE_NOTE, BASE_NOTE + note_range) for _ in range(melody_length)],tempo)
         for _ in range(population_size)
     ]
     
@@ -126,7 +146,7 @@ def generate_music_genetic(weather_data, file_name, generations=30, population_s
             best_fit = best_gen_fit
             best_melody = best_gen_melody
         
-        print(f"Generation {gen+1}: Best fitness = {best_gen_fit:.2f}")
+        logger.debug("Generation %d: best fitness = %.2f", gen + 1, best_gen_fit)
         
         survivors = [individual for score, individual in scored_population[:population_size // 2]]
         
@@ -141,13 +161,17 @@ def generate_music_genetic(weather_data, file_name, generations=30, population_s
         
         population = new_population
 
-    print("Best melody found:", best_melody)
+    return best_melody
 
+
+def build_midi(melody, tempo, weather_data):
+    """Melody, percussion and harmony tracks as a MIDI file."""
     mid = MidiFile()
 
     track1 = MidiTrack()
+    # Use the evolved tempo for playback
+    track1.append(MetaMessage('set_tempo', tempo=bpm2tempo(tempo), time=0))
     track1.append(Message('program_change', program=2, time=0))  # Piano
-    melody, tempo = best_melody
     for note in melody:
         note = int(note)
         track1.append(Message('note_on', note=note, velocity=100, time=0))
@@ -173,15 +197,33 @@ def generate_music_genetic(weather_data, file_name, generations=30, population_s
     mid.tracks.append(track1)
     mid.tracks.append(track2)
     mid.tracks.append(track3)
+    return mid
 
-    
-    midi_filename = './static/generated/' + file_name + '.mid'
-    mid.save(midi_filename)
-    
+
+def generate_music_genetic(weather_data, file_name, output_dir, soundfont_path=None, generations=30, population_size=20):
+    """
+    Generate music for the weather and save <file_name>.mid in output_dir.
+    A .wav file is also created when FluidSynth and the soundfont are available.
+    Returns the paths of the created files.
+    """
+    melody, tempo = evolve_melody(weather_data, generations, population_size)
+    mid = build_midi(melody, tempo, weather_data)
+
+    os.makedirs(output_dir, exist_ok=True)
+    midi_path = os.path.join(output_dir, file_name + '.mid')
+    mid.save(midi_path)
+    files = {"midi": midi_path, "wav": None}
+
     # Convert MIDI to WAV
-    fs = FluidSynth('soundfonts/FluidR3_GM.sf2')  # Correct initialization
-    wav_filename = './static/generated/' + file_name + '.wav'
-    fs.midi_to_audio(midi_filename, wav_filename)  # Convert MIDI to WAV
-
-
-# generate_music_genetic(weather_data)
+    if soundfont_path and os.path.exists(soundfont_path):
+        try:
+            from midi2audio import FluidSynth
+            wav_path = os.path.join(output_dir, file_name + '.wav')
+            FluidSynth(soundfont_path).midi_to_audio(midi_path, wav_path)
+            if os.path.exists(wav_path):
+                files["wav"] = wav_path
+        except Exception:
+            logger.exception("WAV conversion failed; returning MIDI only")
+    else:
+        logger.warning("Soundfont not found (%s); returning MIDI only", soundfont_path)
+    return files
