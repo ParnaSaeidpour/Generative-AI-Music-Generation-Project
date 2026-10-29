@@ -216,23 +216,32 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (data.status === 'success') {
                 weatherInfo.textContent = data.message;
-                
-                // Update audio player and download links
-                audioSource.textContent = data.wav_url;
-                audioPlayer.src = data.wav_url;
                 midiDownload.href = data.midi_url;
-                wavDownload.href = data.wav_url;
-                
+
                 // Show the result section
                 result.classList.remove('hidden');
-                
-                // Load and play the audio
-                audioPlayer.load();
-                audioPlayer.play().catch(error => {
-                    console.error('Playback error:', error);
-                    audioStatus.textContent = `Playback error: ${error.message}`;
-                    audioStatus.className = 'debug-value error';
-                });
+
+                if (data.wav_url) {
+                    // Update audio player and download links
+                    musicPlayer.classList.remove('hidden');
+                    wavDownload.classList.remove('hidden');
+                    audioSource.textContent = data.wav_url;
+                    audioPlayer.src = data.wav_url;
+                    wavDownload.href = data.wav_url;
+
+                    // Load and play the audio
+                    audioPlayer.load();
+                    audioPlayer.play().catch(error => {
+                        console.error('Playback error:', error);
+                        audioStatus.textContent = `Playback error: ${error.message}`;
+                        audioStatus.className = 'debug-value error';
+                    });
+                } else {
+                    // Without FluidSynth only the MIDI file is available
+                    musicPlayer.classList.add('hidden');
+                    wavDownload.classList.add('hidden');
+                    weatherInfo.textContent = data.message + ' (MIDI only: audio preview needs FluidSynth and a soundfont)';
+                }
             } else {
                 weatherInfo.textContent = data.message;
                 result.classList.remove('hidden');

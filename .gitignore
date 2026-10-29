@@ -9,3 +9,4 @@ soundfonts/
 .DS_Store
 *.mid
 venv
+.env
