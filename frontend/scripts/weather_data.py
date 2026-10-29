@@ -30,5 +30,6 @@ def get_weather_data_by_city(city):
             "wind_speed": forecast.wind_speed,
             "wind_direction": forecast.wind_direction,
             "cloudiness": forecast.cloudiness,
-            "precipitation": forecast.precipitation
+            "precipitation": forecast.precipitation,  # SMHI category: 0 = none, 1 = snow, 3 = rain, ...
+            "precipitation_mm": forecast.mean_precipitation,  # mm per hour
         }
